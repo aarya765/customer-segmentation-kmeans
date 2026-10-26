@@ -1,0 +1,12 @@
+venv/
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
+.env
+# big / re-downloadable data (the small data/sample file IS committed)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+*.xlsx
