@@ -7,3 +7,4 @@ openpyxl
 matplotlib
 seaborn
 jupyter
+statsmodels

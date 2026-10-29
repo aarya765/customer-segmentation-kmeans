@@ -8,14 +8,18 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from src.cleaning import clean, load_raw
 from src.clustering import (add_pca, evaluate_k, fit_kmeans, name_segments,
                             prepare_features, segment_summary)
+from src.forecasting import daily_revenue, run_forecasting
 from src.rfm import build_rfm
+from src.supervised import build_customer_table, run_classification, run_regression
 
 RAW = ROOT / "data" / "raw" / "Online Retail.xlsx"
 SAMPLE = ROOT / "data" / "sample" / "sample_online_retail.csv"
@@ -46,6 +50,17 @@ def run_model(df: pd.DataFrame, k: int):
     X = prepare_features(rfm)
     seg = add_pca(X, name_segments(rfm, fit_kmeans(X, k)))
     return seg, evaluate_k(X)
+
+
+@st.cache_data(show_spinner="Training churn and spend models...")
+def run_supervised(df: pd.DataFrame):
+    table, cutoff = build_customer_table(df)
+    return table, cutoff, run_classification(table), run_regression(table)
+
+
+@st.cache_data(show_spinner="Fitting forecasting models...")
+def run_fc(df: pd.DataFrame):
+    return run_forecasting(daily_revenue(df))
 
 
 # ---------------- sidebar ----------------
@@ -81,7 +96,9 @@ c2.metric("Transactions", f"{len(df):,}")
 c3.metric("Total revenue", f"£{df['TotalPrice'].sum():,.0f}")
 c4.metric("Avg order value", f"£{df.groupby('InvoiceNo')['TotalPrice'].sum().mean():,.2f}")
 
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "📐 Choosing k", "🎯 Segments", "🔎 Customers"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(
+    ["📊 Overview", "📐 Choosing k", "🎯 Segments", "🔎 Customers",
+     "🧪 Churn (classification)", "💷 Spend (regression)", "📈 Forecast"])
 
 # ---------------- overview ----------------
 with tab1:
@@ -168,3 +185,71 @@ with tab4:
         st.write(seg.loc[cid, ["Recency", "Frequency", "Monetary", "Segment"]])
     elif cid:
         st.warning("CustomerID not found.")
+
+
+# ---------------- classification: churn ----------------
+with tab5:
+    table, cutoff, clf, reg = run_supervised(df)
+    st.subheader("Will a customer buy again in the next 90 days?")
+    st.caption(f"Features use transactions up to {cutoff.date()} only; the label is whether the customer "
+               "made no purchase in the following 90 days (churned = 1). No future information leaks into the features.")
+    n0, n1 = clf["counts"].get(0, 0), clf["counts"].get(1, 0)
+    a, b, c_ = st.columns(3)
+    a.metric("Active customers", f"{n0:,}")
+    b.metric("Churned customers", f"{n1:,}")
+    c_.metric("Churn rate", f"{clf['churn_rate']:.1%}")
+    st.info("Class balance check: the classes are mildly imbalanced, so models use class_weight='balanced', the split is "
+            "stratified, and accuracy is not used alone (precision, recall, F1 and ROC-AUC are reported).")
+    rows = [{"Model": k, **{m_: round(v[m_], 3) for m_ in ["accuracy", "precision", "recall", "f1", "roc_auc"]},
+             "CV AUC (5-fold)": f"{v['cv_auc_mean']:.3f} ± {v['cv_auc_std']:.3f}"} for k, v in clf["models"].items()]
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    left, right = st.columns(2)
+    cm = clf["models"][clf["best"]]["confusion"]
+    left.plotly_chart(px.imshow(cm, text_auto=True, x=["Active", "Churned"], y=["Active", "Churned"],
+                                labels=dict(x="Predicted", y="Actual"), color_continuous_scale="Blues",
+                                title=f"Confusion matrix: {clf['best']}"), width="stretch")
+    roc = go.Figure()
+    for k_, (fpr, tpr) in clf["roc"].items():
+        roc.add_scatter(x=fpr, y=tpr, mode="lines", name=f"{k_} (AUC {clf['models'][k_]['roc_auc']:.2f})")
+    roc.add_scatter(x=[0, 1], y=[0, 1], mode="lines", line=dict(dash="dash"), name="Chance")
+    roc.update_layout(title="ROC curves (test set)", xaxis_title="False positive rate", yaxis_title="True positive rate")
+    right.plotly_chart(roc, width="stretch")
+    imp = pd.Series(clf["importance"]).sort_values().reset_index()
+    imp.columns = ["Feature", "Importance"]
+    st.plotly_chart(px.bar(imp, x="Importance", y="Feature", orientation="h", title="Random Forest feature importance"),
+                    width="stretch")
+
+# ---------------- regression: next-90-day spend ----------------
+with tab6:
+    st.subheader("How much will a customer spend in the next 90 days?")
+    st.caption("Same leakage-free design as the churn model. Target: spend in the 90 days after the cutoff "
+               "(zero for customers who do not buy). Spend is heavy-tailed, so models are trained on log(1 + spend).")
+    rows = [{"Model": k, "MAE (£)": round(v["mae"], 1), "RMSE (£)": round(v["rmse"], 1), "R²": round(v["r2"], 3),
+             "Median AE (£)": round(v["median_ae"], 1), "R² (log scale)": round(v["r2_log"], 3)} for k, v in reg["models"].items()]
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    st.caption(f"Best model: {reg['best']}. R² on the £ scale is modest because a few very large customers dominate the error.")
+    act = np.array(reg["actual"]); prd = np.array(reg["pred"][reg["best"]])
+    l, r = st.columns(2)
+    l.plotly_chart(px.scatter(x=np.log1p(act), y=np.log1p(prd), opacity=0.5,
+                              labels=dict(x="log(1 + actual spend)", y="log(1 + predicted spend)"),
+                              title="Actual vs predicted (log scale)"), width="stretch")
+    r.plotly_chart(px.histogram(x=np.log1p(prd) - np.log1p(act), nbins=40, labels=dict(x="predicted - actual (log)"),
+                                title="Residuals (log scale)"), width="stretch")
+
+# ---------------- time series: revenue forecast ----------------
+with tab7:
+    fc = run_fc(df)
+    st.subheader("Daily revenue forecast")
+    st.caption(f"Chronological split: train {fc['train_start']} to {fc['train_end']} ({fc['n_train']} days), "
+               f"test {fc['test_start']} to {fc['test_end']} ({fc['n_test']} days). MAPE is computed on days with sales.")
+    rows = [{"Method": k, "MAE (£)": round(v["mae"]), "RMSE (£)": round(v["rmse"]), "MAPE (%)": round(v["mape"], 1)}
+            for k, v in fc["models"].items()]
+    st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    pick = st.selectbox("Forecast to plot", list(fc["pred"].keys()), index=list(fc["pred"].keys()).index(fc["best"]))
+    dates = pd.to_datetime(fc["dates"]); n0 = fc["n_train"]
+    fig = go.Figure()
+    fig.add_scatter(x=dates[:n0], y=fc["actual"][:n0], name="Train (actual)", line=dict(color="gray"))
+    fig.add_scatter(x=dates[n0:], y=fc["actual"][n0:], name="Test (actual)", line=dict(color="black"))
+    fig.add_scatter(x=dates[n0:], y=fc["pred"][pick], name=f"Forecast: {pick}", line=dict(color="crimson"))
+    fig.update_layout(title="Daily revenue: actual vs forecast", yaxis_title="Revenue (£)")
+    st.plotly_chart(fig, width="stretch")

@@ -1,0 +1,307 @@
+{
+  "cleaning": {
+    "raw_rows": 541909,
+    "after_dropping_missing_customer_id": 406829,
+    "after_dropping_cancellations": 397924,
+    "after_dropping_nonpositive_qty_price": 397884,
+    "after_dropping_duplicates": 392692,
+    "clean_rows": 392692,
+    "customers": 4338
+  },
+  "revenue_total": 8887208.894000001,
+  "avg_order_value": 479.56016047917126,
+  "rfm_describe": {
+    "Recency": {
+      "count": 4338.0,
+      "mean": 92.54,
+      "std": 100.01,
+      "min": 1.0,
+      "25%": 18.0,
+      "50%": 51.0,
+      "75%": 142.0,
+      "max": 374.0
+    },
+    "Frequency": {
+      "count": 4338.0,
+      "mean": 4.27,
+      "std": 7.7,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 2.0,
+      "75%": 5.0,
+      "max": 209.0
+    },
+    "Monetary": {
+      "count": 4338.0,
+      "mean": 2048.69,
+      "std": 8985.23,
+      "min": 3.75,
+      "25%": 306.48,
+      "50%": 668.57,
+      "75%": 1660.6,
+      "max": 280206.02
+    }
+  },
+  "rfm_corr_spearman": {
+    "Recency": {
+      "Recency": 1.0,
+      "Frequency": -0.562,
+      "Monetary": -0.481
+    },
+    "Frequency": {
+      "Recency": -0.562,
+      "Frequency": 1.0,
+      "Monetary": 0.807
+    },
+    "Monetary": {
+      "Recency": -0.481,
+      "Frequency": 0.807,
+      "Monetary": 1.0
+    }
+  },
+  "k_metrics": [
+    {
+      "k": 2,
+      "inertia": 6483.5894,
+      "silhouette": 0.4328
+    },
+    {
+      "k": 3,
+      "inertia": 4869.4886,
+      "silhouette": 0.3365
+    },
+    {
+      "k": 4,
+      "inertia": 3939.0494,
+      "silhouette": 0.3375
+    },
+    {
+      "k": 5,
+      "inertia": 3296.7087,
+      "silhouette": 0.3162
+    },
+    {
+      "k": 6,
+      "inertia": 2855.7641,
+      "silhouette": 0.3124
+    },
+    {
+      "k": 7,
+      "inertia": 2548.8202,
+      "silhouette": 0.3092
+    },
+    {
+      "k": 8,
+      "inertia": 2336.3411,
+      "silhouette": 0.3033
+    },
+    {
+      "k": 9,
+      "inertia": 2156.0057,
+      "silhouette": 0.2811
+    },
+    {
+      "k": 10,
+      "inertia": 2005.7462,
+      "silhouette": 0.2767
+    }
+  ],
+  "k_selected": 4,
+  "segments": [
+    {
+      "Segment": "Champions",
+      "Customers": 713,
+      "Avg_Recency": 12.17,
+      "Avg_Frequency": 13.75,
+      "Avg_Monetary": 8088.02,
+      "Total_Revenue": 5766757.07,
+      "Revenue_Share_%": 64.89
+    },
+    {
+      "Segment": "Loyal Customers",
+      "Customers": 1166,
+      "Avg_Recency": 71.64,
+      "Avg_Frequency": 4.08,
+      "Avg_Monetary": 1801.78,
+      "Total_Revenue": 2100873.02,
+      "Revenue_Share_%": 23.64
+    },
+    {
+      "Segment": "At-Risk / Lost",
+      "Customers": 1622,
+      "Avg_Recency": 181.51,
+      "Avg_Frequency": 1.32,
+      "Avg_Monetary": 341.0,
+      "Total_Revenue": 553099.77,
+      "Revenue_Share_%": 6.22
+    },
+    {
+      "Segment": "Occasional Buyers",
+      "Customers": 837,
+      "Avg_Recency": 17.7,
+      "Avg_Frequency": 2.19,
+      "Avg_Monetary": 557.32,
+      "Total_Revenue": 466479.03,
+      "Revenue_Share_%": 5.25
+    }
+  ],
+  "country_revenue_top": {
+    "United Kingdom": 7285025.0,
+    "Netherlands": 285446.0,
+    "EIRE": 265262.0,
+    "Germany": 228678.0,
+    "France": 208934.0
+  },
+  "classification": {
+    "counts": {
+      "0": 1921,
+      "1": 1449
+    },
+    "churn_rate": 0.42997032640949556,
+    "n_train": 2696,
+    "n_test": 674,
+    "models": {
+      "Baseline (majority class)": {
+        "accuracy": 0.56973293768546,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5,
+        "cv_auc_mean": 0.5,
+        "cv_auc_std": 0.0,
+        "confusion": [
+          [
+            384,
+            0
+          ],
+          [
+            290,
+            0
+          ]
+        ]
+      },
+      "Logistic Regression": {
+        "accuracy": 0.6439169139465876,
+        "precision": 0.5675675675675675,
+        "recall": 0.7241379310344828,
+        "f1": 0.6363636363636364,
+        "roc_auc": 0.7187320402298851,
+        "cv_auc_mean": 0.7407719981179188,
+        "cv_auc_std": 0.010173998255138234,
+        "confusion": [
+          [
+            224,
+            160
+          ],
+          [
+            80,
+            210
+          ]
+        ]
+      },
+      "Random Forest": {
+        "accuracy": 0.6439169139465876,
+        "precision": 0.5753012048192772,
+        "recall": 0.6586206896551724,
+        "f1": 0.6141479099678456,
+        "roc_auc": 0.6981950431034483,
+        "cv_auc_mean": 0.7329443756355432,
+        "cv_auc_std": 0.015006554989883384,
+        "confusion": [
+          [
+            243,
+            141
+          ],
+          [
+            99,
+            191
+          ]
+        ]
+      }
+    },
+    "importance": {
+      "Recency": 0.21188029933977015,
+      "Frequency": 0.16926401077176928,
+      "Monetary": 0.28640728444862584,
+      "Tenure": 0.15493280490976274,
+      "AvgOrderValue": 0.177515600530072
+    },
+    "best": "Logistic Regression",
+    "cutoff": "2011-09-10"
+  },
+  "regression": {
+    "n_train": 2696,
+    "n_test": 674,
+    "models": {
+      "Baseline (mean)": {
+        "mae": 1285.7071305186714,
+        "rmse": 8073.100933151834,
+        "r2": -0.0018832685687408812,
+        "median_ae": 773.8660055637982,
+        "r2_log": -0.8029871795358325,
+        "mae_log": 3.3368312254147456
+      },
+      "Linear Regression": {
+        "mae": 1038.6991490535372,
+        "rmse": 7836.59381160443,
+        "r2": 0.05595861527169044,
+        "median_ae": 155.2650565102636,
+        "r2_log": 0.21693108035465847,
+        "mae_log": 2.5820340563282964
+      },
+      "Random Forest (log target)": {
+        "mae": 886.5578602389329,
+        "rmse": 7330.151803205943,
+        "r2": 0.17403375942765453,
+        "median_ae": 173.290992680489,
+        "r2_log": 0.1810852152441892,
+        "mae_log": 2.5816502695495465
+      }
+    },
+    "best": "Random Forest (log target)"
+  },
+  "forecasting": {
+    "n_total": 373,
+    "n_train": 298,
+    "n_test": 75,
+    "train_start": "2010-12-01",
+    "train_end": "2011-09-24",
+    "test_start": "2011-09-25",
+    "test_end": "2011-12-08",
+    "zero_days": 69,
+    "zero_days_by_weekday": {
+      "Monday": 6,
+      "Tuesday": 1,
+      "Wednesday": 1,
+      "Thursday": 1,
+      "Friday": 4,
+      "Saturday": 53,
+      "Sunday": 3
+    },
+    "train_mean": 20016.211953020134,
+    "test_mean": 36507.30762666667,
+    "models": {
+      "Naive (last value)": {
+        "mae": 36507.30762666667,
+        "rmse": 41458.82879961341,
+        "mape": 100.0
+      },
+      "Seasonal naive (7 days)": {
+        "mae": 16998.307333333334,
+        "rmse": 27039.800326984016,
+        "mape": 49.501720345041754
+      },
+      "Holt-Winters (additive, damped trend)": {
+        "mae": 10687.314562686202,
+        "rmse": 13230.53567709513,
+        "mape": 28.31524888654034
+      },
+      "SARIMA(1,1,1)(1,0,1,7)": {
+        "mae": 14466.72400127464,
+        "rmse": 18802.743868653044,
+        "mape": 35.64116847549244
+      }
+    },
+    "best": "Holt-Winters (additive, damped trend)"
+  }
+}
